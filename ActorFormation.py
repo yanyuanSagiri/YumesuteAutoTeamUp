@@ -24,11 +24,12 @@ class CheckUnrepeated:
             401, 402, 403, 404, 405
         }
         self.posit_master = {1: None, 2: None, 3: None, 4: None, 5: None}
-        self.POSIT = False
+        # self.POSIT = False
         self.num_master = {1, 2, 3, 4, 5}
         self.team_final = [None] * 10
         self.charb_busy = set()
         self.poste_busy = set()
+        self.state_base = [0, 0, 0, 0, 0]
         self.chara_mid2id = defaultdict(list)
         self._status = set()
         self._result = []
@@ -97,8 +98,10 @@ class CheckUnrepeated:
             self.posit_master[posit] = [charb, poste]
             self.team_final[(posit << 1) - 2] = charb
             self.team_final[(posit << 1) - 1] = poste
-            self.POSIT = True
+            self.state_base[posit] = poste
+            # self.POSIT = True
             self.num_master.discard(posit)
+        self.state_base = tuple(self.state_base)
 
     def urp_filter_n(self, num_busy=None):  # check {1, 2, 3, 4, 5} which is used and discard
         number_bot = self.num_master.copy()
@@ -114,7 +117,7 @@ class CheckUnrepeated:
         #     avail_poste = self.urp_filter_dag(chara_poste[team_f[c_id]])
 
     def poster_processor(self, c1, c2, c3, c4, c5, solutions):
-        # stime = time.time()
+        stime = time.time()
         self._result = []
         self._status = set()
         posit_bot = self.team_final.copy()
@@ -126,16 +129,23 @@ class CheckUnrepeated:
             poste_bot = self.urp_filter_dag(solutions[posit_bot[c_id]], self.poste_busy)
             # print(poste_bot)
             for p in poste_bot:
-                state = frozenset({(n, p)})
                 # print(f"put poster {p} at position {n}")
-                self._status.add(state)
-                queue.append(state)
+                state_bot = list(self.state_base)
+                state_bot[n - 1] = p
+                state_bot = tuple(state_bot)
+                self._status.add(state_bot)
+                queue.append(state_bot)
+                # state = frozenset({(n, p)})
+                # self._status.add(state)
+                # queue.append(state)
         q_len = 5 - len(self.poste_busy)  # depth
         for i in range(q_len - 1):
             next_queue = []
             for state in queue:
-                nums_bot = {n for n, _ in state}
-                busy_bot = {b for _, b in state} | self.poste_busy
+                # nums_bot = {n for n, _ in state}
+                # busy_bot = {b for _, b in state} | self.poste_busy
+                nums_bot = {i+1 for i, p in enumerate(state) if p}
+                busy_bot = {p for p in enumerate(state) if p}
                 # print(f"now check frontier state {state}")
                 # print(f"positions: {nums_bot}")
                 # print(f"posters: {busy_bot}")
@@ -145,7 +155,10 @@ class CheckUnrepeated:
                     poste_bot = self.urp_filter_dag(solutions[posit_bot[c_id]], busy_bot)
                     # print(poste_bot)
                     for p in poste_bot:
-                        state_bot = state | {(n, p)}
+                        state_bot = list(state)
+                        state_bot[n - 1] = p
+                        state_bot = tuple(state_bot)
+                        # state_bot = state | {(n, p)}
                         # print(state_bot)
                         if state_bot in self._status:
                             # print(f"skipped")
@@ -155,16 +168,18 @@ class CheckUnrepeated:
                             self._status.add(state_bot)
                             next_queue.append(state_bot)
             queue = next_queue
-            # if i+2 == 4:
-                # print(f"4 posters cost time {time.time() - stime}")
+            if i+2 == 4:
+                print(f"4 posters cost time {time.time() - stime}s")  # Origin: 3.328s Tuple: 0.860s
             # print(f"Check status: {i+2}/{q_len}")
         # print(queue)
         for q in queue:
             res_bot = [None] * 10
             res_bot[0:9:2] = [c1, c2, c3, c4, c5]
+            res_bot[1:10:2] = list(q)
             for n, p in q:
                 res_bot[(n << 1) - 1] = p
             # print(res_bot)
+            # TODO(Frocean): If there's no need to save as JSON, turn res_bot into tuple.
             self._result.append(res_bot)
         return self._result
 
@@ -184,6 +199,8 @@ class CheckUnrepeated:
 def automatic_formation(
         userdata_path="./Yumesute.json",
         character_master_path="./CharacterMaster.json",
+        poster_ability_path="./PosterAbilityMaster.json",
+        effect_master_path="./EffectMaster.json",
         leader_character=0, leader_poster=0, leader_position=0
 ):
     start_time = time.time()
@@ -212,7 +229,10 @@ def automatic_formation(
         c_cache[c_id] = c_data_filtered
     # print(c_cache)
     checker.urp_filter_l(leader_character, leader_poster, leader_position, c_cache)
-    poster_solutions = find_poster_solutions()
+    poster_solutions = find_poster_solutions(userdata_path,
+                                             character_master_path,
+                                             poster_ability_path,
+                                             effect_master_path)
     for c1 in checker.urp_filter_c(1, c_cache):
         data_c1 = c_cache.get(c1).get("CharacterBaseMasterId")
         checker.charb_busy.update(data_c1)
