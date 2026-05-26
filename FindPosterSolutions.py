@@ -1,10 +1,10 @@
 """
-FindPosterSolution module is used to prune some status in initial stage.
+FindPosterSolution module is used to prune some posters' status in preliminary preprocessing phase.
 Input: relative files' path.
 Output: preliminary character with useful posters.
         Posters are maintained by a DAG which records the dominating relations.
 After attribute and filter, the number of states decreased by 96.7% than enum.
-After DAG, the number of states decreased by 99.961% than enum.
+After domination DAG, the number of states decreased by 99.961% than enum.
 """
 import json
 from collections import defaultdict
@@ -223,7 +223,7 @@ class PosterSolution:
     "PlayerRankPointUp", "RewardUp",
     "StarActScoreUp",
     "FinalPerformanceUpCancelSense"
-    Output: A dictionary with the key: character base id, value: data.
+    Output: A dictionary with the key: character base id, value: self's data.
     """
     def __init__(self):
         self.poster = {}
@@ -312,10 +312,10 @@ class PosterSolution:
 
 
 def find_poster_solutions(
-        userdata_path="./Yumetest.json",
-        character_master_path="./CharacterMaster.json",
-        poster_ability_path="./PosterAbilityMaster.json",
-        effect_master_path="./EffectMaster.json",
+        userdata_path="./Yumesute.json",
+        character_master_path="./Data/CharacterMaster.json",
+        poster_ability_path="./Data/PosterAbilityMaster.json",
+        effect_master_path="./Data/EffectMaster.json",
 ):
     with open(userdata_path, "r", encoding="utf-8") as f:
         user_data = json.load(f)

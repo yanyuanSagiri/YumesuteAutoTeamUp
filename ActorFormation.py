@@ -3,10 +3,11 @@ ActorFormation module is used for building formation automatically.
 Input: relative files' path.
 Output: N-Top results among all status.
 """
-import json, copy, time
+import json
+import time
 
 from FindPosterSolutions import find_poster_solutions, CharacterFilter
-from collections import defaultdict, deque
+from collections import defaultdict
 
 
 class CheckUnrepeated:
@@ -23,25 +24,27 @@ class CheckUnrepeated:
             301, 302, 303, 304, 305,
             401, 402, 403, 404, 405
         }
-        self.posit_master = {1: None, 2: None, 3: None, 4: None, 5: None}
-        # self.POSIT = False
-        self.num_master = {1, 2, 3, 4, 5}
-        self.team_final = [None] * 10
-        self.charb_busy = set()
-        self.poste_busy = set()
-        self.state_base = [0, 0, 0, 0, 0]
-        self.chara_mid2id = defaultdict(list)
         self._status = set()
-        self._result = []
+        self._result_chara = []
+        self._result_poste = []
+        self.manda_chara = [0] * 5  # record mandatory characters and [index] position
+        self.manda_poste = [0] * 5  # record mandatory posters and [index] position
+        self.prior_chara = set()  # record mandatory characters with void position
+        self.prior_poste = set()  # record mandatory posters with void position
+        self.busy_charb = set()  # record busy characters' [BaseId] after processing priorities
+        self.busy_poste = set()  # record busy posters' [BaseId] after processing priorities
+        self.num_master = {1, 2, 3, 4, 5}
+        self.state_base = [0, 0, 0, 0, 0]  # be used for initialize bfs status
+        self.chara_mid2id = defaultdict(list)
 
-    def urp_filter_c(self, posit, c_cache):
-        if self.posit_master[posit]:
-            return {self.posit_master[posit][0]}
-        cm_bot = self.chara_master.copy()
-        for c in self.charb_busy:
-            cm_bot.discard(c)
+    def urp_filter_c(self, master, filtlist=None, c_cache=None):  # filter characters' filtlist in master
+        if not c_cache:
+            return {f for f in master if f not in filtlist}
+        charm_bot = master.copy()
+        for f in filtlist:
+            charm_bot.discard(f)
         c_bot = set()
-        for c in cm_bot:
+        for c in charm_bot:
             for i in self.chara_mid2id[c]:
                 charb = c_cache[i].get("CharacterBaseMasterId", [])
                 charb_len = len(charb)
@@ -53,7 +56,7 @@ class CheckUnrepeated:
                         j = charb[1]
                     else:
                         j = charb[0]
-                    if j in self.charb_busy or j == charb[0]:
+                    if j in filtlist or j == charb[0]:
                         continue
                     c_bot.add(i)
                 else:
@@ -87,21 +90,34 @@ class CheckUnrepeated:
                         boolean = True  # status changed
         return c_p_bot
 
-    def urp_filter_l(self, charb, poste, posit, c_cache):
-        if charb:
-            characters = c_cache[charb].get("CharacterBaseMasterId")
-            for c in characters:
-                self.charb_busy.add(c)
-        if poste:
-            self.poste_busy.update(poste)
-        if posit in [1, 2, 3, 4, 5]:
-            self.posit_master[posit] = [charb, poste]
-            self.team_final[(posit << 1) - 2] = charb
-            self.team_final[(posit << 1) - 1] = poste
-            self.state_base[posit] = poste
-            # self.POSIT = True
-            self.num_master.discard(posit)
-        self.state_base = tuple(self.state_base)
+    def urp_filter_i(self, charc, poste, c_cache):  # Initialize mandatory elements
+        # TODO(Frocean): Add preprocessing persistent domination DAG module at convenience
+        for i in range(5):
+            i2 = i << 1
+            bid = charc[i2]
+            pos = charc[i2 + 1] - 1
+            bool_either = False
+            if not pos < 0:  # mandatory character with position
+                self.manda_chara[pos] = bid
+                bool_either = True
+            elif bid:  # mandatory character without position
+                self.prior_chara.add(bid)
+                bool_either = True
+            if bool_either:
+                cbid = c_cache[bid].get("CharacterBaseMasterId", [])
+                for j in cbid:
+                    self.busy_charb.add(j)
+            bid = poste[i2]
+            pos = poste[i2 + 1] - 1
+            bool_either = False
+            if not pos < 0:  # mandatory poster with position
+                self.manda_poste[pos] = bid
+                bool_either = True
+            elif bid:  # mandatory poster without position
+                self.prior_poste.add(bid)
+                bool_either = True
+            if bool_either:
+                self.busy_poste.add(bid)
 
     def urp_filter_n(self, num_busy=None):  # check {1, 2, 3, 4, 5} which is used and discard
         number_bot = self.num_master.copy()
@@ -110,98 +126,140 @@ class CheckUnrepeated:
                 number_bot.discard(n)
         return number_bot
 
-    # def urp_bfs_p(self, team_f, posit_id, chara_poste):
-        # for p in posit_id:
-        #     c_id = (p - 1) << 1
-        #     p_id = (p << 1) - 1
-        #     avail_poste = self.urp_filter_dag(chara_poste[team_f[c_id]])
-
-    def poster_processor(self, c1, c2, c3, c4, c5, solutions):
+    def processor_character(self, c_cache):
         stime = time.time()
-        self._result = []
+        queue = []
+        self._result_chara = []
         self._status = set()
-        posit_bot = self.team_final.copy()
-        posit_bot[0:9:2] = [c1, c2, c3, c4, c5]
-        queue = deque()
-        for n in self.urp_filter_n():  # generate initial queue status
-            c_id = (n - 1) << 1
-            # print(f"now set position{n}")
-            poste_bot = self.urp_filter_dag(solutions[posit_bot[c_id]], self.poste_busy)
-            # print(poste_bot)
-            for p in poste_bot:
-                # print(f"put poster {p} at position {n}")
-                state_bot = list(self.state_base)
-                state_bot[n - 1] = p
-                state_bot = tuple(state_bot)
-                self._status.add(state_bot)
-                queue.append(state_bot)
-                # state = frozenset({(n, p)})
-                # self._status.add(state)
-                # queue.append(state)
-        q_len = 5 - len(self.poste_busy)  # depth
-        for i in range(q_len - 1):
-            next_queue = []
+        manda_busy = {i+1 for i in range(5) if self.manda_chara[i]}  # initialize busy position
+        leng = len(self.prior_chara)
+        if leng:  # check prior characters' status initially
+            # not essential to concern duplicated status between mandatory/prior characters
+            for n in self.urp_filter_n(manda_busy):
+                for c in self.prior_chara:
+                    state_bot = list(self.manda_chara)
+                    state_bot[n - 1] = c
+                    state_bot = tuple(state_bot)
+                    self._status.add(state_bot)
+                    queue.append(state_bot)
+            for i in range(leng - 1):
+                queue_next = []
+                for state in queue:
+                    nums_bot = {i+1 for i, p in enumerate(state) if p}  # | manda_busy
+                    busy_bot = {c for c in state if c}
+                    for n in self.urp_filter_n(nums_bot):
+                        for c in self.urp_filter_c(self.prior_chara, busy_bot):
+                            state_bot = list(state)
+                            state_bot[n - 1] = c
+                            state_bot = tuple(state_bot)
+                            if state_bot in self._status:
+                                continue
+                            self._status.add(state_bot)
+                            queue_next.append(state_bot)
+                queue = queue_next
+        leng = 5 - leng - len(manda_busy)
+        if leng == 5:  # A condition which would never be used. So why I code this?
+            for n in self.urp_filter_n():
+                for c in self.urp_filter_c(self.chara_master, set(), c_cache):
+                    state_bot = list(self.state_base)
+                    state_bot[n - 1] = c
+                    state_bot = tuple(state_bot)
+                    self._status.add(state_bot)
+                    queue.append(state_bot)
+            leng -= 1
+        for i in range(leng):  # complete the status for characters
+            queue_next = []
             for state in queue:
-                # nums_bot = {n for n, _ in state}
-                # busy_bot = {b for _, b in state} | self.poste_busy
                 nums_bot = {i+1 for i, p in enumerate(state) if p}
-                busy_bot = {p for p in enumerate(state) if p}
-                # print(f"now check frontier state {state}")
-                # print(f"positions: {nums_bot}")
-                # print(f"posters: {busy_bot}")
+                busy_bot = {i for c in state if c for i in c_cache[c].get("CharacterBaseMasterId", [])}
                 for n in self.urp_filter_n(nums_bot):
-                    # print(f"try put poster at position {n}")
-                    c_id = (n - 1) << 1
-                    poste_bot = self.urp_filter_dag(solutions[posit_bot[c_id]], busy_bot)
-                    # print(poste_bot)
+                    for c in self.urp_filter_c(self.chara_master, busy_bot, c_cache):  # now need to concern
+                        state_bot = list(state)
+                        state_bot[n - 1] = c
+                        state_bot = tuple(state_bot)
+                        if state_bot in self._status:
+                            continue
+                        self._status.add(state_bot)
+                        queue_next.append(state_bot)
+            queue = queue_next
+        print(f"cost time {time.time() - stime} in {len(queue)} solutions")
+        return queue
+
+    def processor_poster(self, clist, solutions):
+        stime = time.time()
+        queue = []
+        self._result_poste = []
+        self._status = set()
+        manda_busy = {i+1 for i in range(5) if self.manda_poste[i]}  # initialize busy position
+        leng = len(self.prior_poste)
+        if leng:  # check prior characters' status initially
+            for n in self.urp_filter_n(manda_busy):  # also feel free to loop, user will check it
+                for p in self.prior_poste:
+                    state_bot = list(self.manda_poste)
+                    state_bot[n - 1] = p
+                    state_bot = tuple(state_bot)
+                    self._status.add(state_bot)
+                    queue.append(state_bot)
+            for i in range(leng - 1):
+                queue_next = []
+                for state in queue:
+                    nums_bot = {i+1 for i, p in enumerate(state) if p}
+                    busy_bot = {p for p in state if p}
+                    for n in self.urp_filter_n(nums_bot):
+                        for p in self.urp_filter_c(self.prior_poste, busy_bot):  # feel free, feel free
+                            state_bot = list(state)
+                            state_bot[n - 1] = p
+                            state_bot = tuple(state_bot)
+                            if state_bot in self._status:
+                                continue
+                            self._status.add(state_bot)
+                            queue_next.append(state_bot)
+                queue = queue_next
+        leng = 5 - leng - len(manda_busy)
+        if leng == 5:  # Why I code this module again?
+            for n in self.urp_filter_n():
+                # print(f"clist: {clist}")
+                for p in solutions[clist[n-1]].supreme_arr:  # feel free, feel free
+                    state_bot = list(self.state_base)
+                    state_bot[n - 1] = p
+                    state_bot = tuple(state_bot)
+                    self._status.add(state_bot)
+                    queue.append(state_bot)
+            leng -= 1
+        for i in range(leng):
+            queue_next = []
+            for state in queue:
+                nums_bot = {i+1 for i, p in enumerate(state) if p}
+                busy_bot = {p for p in state if p}
+                for n in self.urp_filter_n(nums_bot):
+                    poste_bot = self.urp_filter_dag(solutions[clist[n-1]], busy_bot)
                     for p in poste_bot:
                         state_bot = list(state)
                         state_bot[n - 1] = p
                         state_bot = tuple(state_bot)
-                        # state_bot = state | {(n, p)}
-                        # print(state_bot)
                         if state_bot in self._status:
-                            # print(f"skipped")
                             continue
-                        else:
-                            # print(f"add state {state_bot}")
-                            self._status.add(state_bot)
-                            next_queue.append(state_bot)
-            queue = next_queue
-            if i+2 == 4:
-                print(f"4 posters cost time {time.time() - stime}s")  # Origin: 3.328s Tuple: 0.860s
-            # print(f"Check status: {i+2}/{q_len}")
-        # print(queue)
+                        self._status.add(state_bot)
+                        queue_next.append(state_bot)
+            queue = queue_next
         for q in queue:
             res_bot = [None] * 10
-            res_bot[0:9:2] = [c1, c2, c3, c4, c5]
+            res_bot[0:9:2] = clist
             res_bot[1:10:2] = list(q)
-            for n, p in q:
-                res_bot[(n << 1) - 1] = p
-            # print(res_bot)
-            # TODO(Frocean): If there's no need to save as JSON, turn res_bot into tuple.
-            self._result.append(res_bot)
-        return self._result
-
-        # self.urp_bfs_p(posit_bot, self.urp_filter_n(), solutions)
-        # for i1 in self.urp_filter_n():  # place poster in sequence for fixed characters
-        #     for i2 in self.urp_filter_n():
-        #         for i3 in self.urp_filter_n():
-        #             for i4 in self.urp_filter_n():
-        #                 if self.POSIT:
-        #                     self.urp_filter_p(posit_bot, [i1, i2, i3, i4], solutions)
-        #                 else:
-        #                     for i5 in self.urp_filter_n():
-        #                         self.urp_filter_p(posit_bot, [i1, i2, i3, i4, i5], solutions)
-        # self.urp_filter_p(c1, solutions[c1]):
+            self._result_poste.append(tuple(res_bot))
+        print(f"cost time {time.time() - stime} in {len(queue)} solutions")
+        return self._result_poste
 
 
 def automatic_formation(
-        userdata_path="./Yumesute.json",
-        character_master_path="./CharacterMaster.json",
-        poster_ability_path="./PosterAbilityMaster.json",
-        effect_master_path="./EffectMaster.json",
-        leader_character=0, leader_poster=0, leader_position=0
+        userdata_path="./Yumetest.json",
+        character_master_path="./data/CharacterMaster.json",
+        poster_ability_path="./data/PosterAbilityMaster.json",
+        accessory_path="./data/accessory_processed.json",
+        effect_master_path="./data/EffectMaster.json",
+        mandatory_characters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        mandatory_posters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        mandatory_leader=0
 ):
     start_time = time.time()
 
@@ -213,6 +271,10 @@ def automatic_formation(
     with open(character_master_path, "r", encoding="utf-8") as f:
         characters_data = json.load(f)
     characters_id_master = {item["Id"]: item for item in characters_data}
+
+    with open(accessory_path, "r", encoding="utf-8") as f:
+        accessory_data = json.load(f)
+    accessory_list = accessory_data["CharacterBaseMasterId"]
 
     current_time = time.time() - start_time
     print(f"check data in {current_time} s")
@@ -228,43 +290,18 @@ def automatic_formation(
             checker.chara_mid2id[c].append(c_id)
         c_cache[c_id] = c_data_filtered
     # print(c_cache)
-    checker.urp_filter_l(leader_character, leader_poster, leader_position, c_cache)
+    checker.urp_filter_i(mandatory_characters, mandatory_posters, c_cache)
     poster_solutions = find_poster_solutions(userdata_path,
                                              character_master_path,
                                              poster_ability_path,
                                              effect_master_path)
-    for c1 in checker.urp_filter_c(1, c_cache):
-        data_c1 = c_cache.get(c1).get("CharacterBaseMasterId")
-        checker.charb_busy.update(data_c1)
-        for c2 in checker.urp_filter_c(2, c_cache):
-            data_c2 = c_cache.get(c2).get("CharacterBaseMasterId")
-            checker.charb_busy.update(data_c2)
-            for c3 in checker.urp_filter_c(3, c_cache):
-                data_c3 = c_cache.get(c3).get("CharacterBaseMasterId")
-                checker.charb_busy.update(data_c3)
-                for c4 in checker.urp_filter_c(4, c_cache):
-                    data_c4 = c_cache.get(c4).get("CharacterBaseMasterId")
-                    checker.charb_busy.update(data_c4)
-                    for c5 in checker.urp_filter_c(5, c_cache):
-                        data_c5 = c_cache.get(c5).get("CharacterBaseMasterId")
-                        # checker.charb_busy.update(data_c5)
-                        start_time = time.time()
-                        checker.poster_processor(c1, c2, c3, c4, c5, poster_solutions)
-                        current_time = time.time() - start_time
-                        print(f"check all posters results in one character formation in {current_time} s")
-                        # checker.charb_busy.difference_update(data_c5)
-                    checker.charb_busy.difference_update(data_c4)
-                checker.charb_busy.difference_update(data_c3)
-            checker.charb_busy.difference_update(data_c2)
-        checker.charb_busy.difference_update(data_c1)
+    print(f"check characters...")
+    result_c = checker.processor_character(c_cache)
+    for r in result_c:
+        print(f"check posters...")
+        result = checker.processor_poster(list(r), poster_solutions)
+        print(result)
 
-
-resource_path = (
-    "./Yumetest.json",
-    "./CharacterMaster.json",
-    "./PosterAbilityMaster.json",
-    "./EffectMaster.json"
-)
 
 if __name__ == "__main__":
     automatic_formation()
