@@ -255,11 +255,9 @@ def automatic_formation(
         userdata_path="./Yumetest.json",
         character_master_path="./data/CharacterMaster.json",
         poster_ability_path="./data/PosterAbilityMaster.json",
-        accessory_path="./data/accessory_processed.json",
         effect_master_path="./data/EffectMaster.json",
         mandatory_characters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        mandatory_posters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        mandatory_leader=0
+        mandatory_posters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 ):
     start_time = time.time()
 
@@ -271,10 +269,6 @@ def automatic_formation(
     with open(character_master_path, "r", encoding="utf-8") as f:
         characters_data = json.load(f)
     characters_id_master = {item["Id"]: item for item in characters_data}
-
-    with open(accessory_path, "r", encoding="utf-8") as f:
-        accessory_data = json.load(f)
-    accessory_list = accessory_data["CharacterBaseMasterId"]
 
     current_time = time.time() - start_time
     print(f"check data in {current_time} s")
