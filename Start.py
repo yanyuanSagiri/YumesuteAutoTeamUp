@@ -26,10 +26,8 @@ if __name__ == "__main__":
         userdata_path,
         character_master_path,
         poster_ability_path,
-        accessory_path,
         effect_master_path,
         tuple(args.mandatory_characters),
-        tuple(args.mandatory_posters),
-        args.mandatory_leader
+        tuple(args.mandatory_posters)
     )
 
