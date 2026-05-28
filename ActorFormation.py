@@ -182,7 +182,7 @@ class CheckUnrepeated:
                         self._status.add(state_bot)
                         queue_next.append(state_bot)
             queue = queue_next
-        print(f"cost time {time.time() - stime} in {len(queue)} solutions")
+        print(f"cost time {time.time() - stime}s in {len(queue)} solutions")
         return queue
 
     def processor_poster(self, clist, solutions):
@@ -244,10 +244,15 @@ class CheckUnrepeated:
             queue = queue_next
         for q in queue:
             res_bot = [None] * 10
-            res_bot[0:9:2] = clist
-            res_bot[1:10:2] = list(q)
+            res_bot[:5] = clist
+            res_bot[5:10] = list(q)
             self._result_poste.append(tuple(res_bot))
-        print(f"cost time {time.time() - stime} in {len(queue)} solutions")
+        # for q in queue:
+        #     res_bot = [None] * 10
+        #     res_bot[0:9:2] = clist
+        #     res_bot[1:10:2] = list(q)
+        #     self._result_poste.append(tuple(res_bot))
+        print(f"cost time {time.time() - stime}s in {len(queue)} solutions")
         return self._result_poste
 
 
@@ -257,8 +262,10 @@ def automatic_formation(
         poster_ability_path="./data/PosterAbilityMaster.json",
         effect_master_path="./data/EffectMaster.json",
         mandatory_characters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        mandatory_posters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+        mandatory_posters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        pipeline_queue=None
 ):
+    print(f"[DEBUG] automatic_formation called, pipeline_queue is {'None' if pipeline_queue is None else 'Queue(maxsize=' + str(pipeline_queue.maxsize) + ')'}")
     start_time = time.time()
 
     with open(userdata_path, "r", encoding="utf-8") as f:
@@ -271,7 +278,7 @@ def automatic_formation(
     characters_id_master = {item["Id"]: item for item in characters_data}
 
     current_time = time.time() - start_time
-    print(f"check data in {current_time} s")
+    print(f"check data in {current_time}s")
 
     c_cache = {}
     checker = CheckUnrepeated()
@@ -291,11 +298,51 @@ def automatic_formation(
                                              effect_master_path)
     print(f"check characters...")
     result_c = checker.processor_character(c_cache)
+    print(f"[DEBUG] processor_character done, {len(result_c)} character combinations")
+    put_count = 0
     for r in result_c:
         print(f"check posters...")
+        charb_id = [None] * 5
+        for n, c in enumerate(r):
+            charb_id[n-1] = c_cache[c].get("CharacterBaseMasterId", [])
         result = checker.processor_poster(list(r), poster_solutions)
-        print(result)
+        if pipeline_queue is not None:
+            pipeline_queue.put({"Result": result, "CharacterBaseMasterId": charb_id})
+            put_count += 1
+            if put_count % 100 == 0:
+                print(f"[DEBUG] put {put_count} items into queue, queue size ~{pipeline_queue.qsize()}")
+    print(f"[DEBUG] finished putting {put_count} items, sending EOT")
+    if pipeline_queue is not None:
+        pipeline_queue.put(None)
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(description='Yumesute auto team-up')
+    parser.add_argument('user', nargs='?', metavar='File name for user data', default='Yumetest.json', help='账号数据名称')
+    parser.add_argument('-d', '--data', metavar='DIR for server data', default='data', help='服务器内资源路径')
+    parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10, default=[0]*10,
+                        help='交替输入必选角色及其固定位置, 不选则填0, 以空格分割')
+    parser.add_argument('-mp', '--mandatory_posters', type=int, nargs=10, default=[0]*10,
+                        help='交替输入必选海报及其对应位置, 不选则填0, 以空格分割')
+    parser.add_argument('-ml', '--mandatory_leader', type=int, default=0, help='固定队长位置, 不选则填0')
+    parser.add_argument('-u', '--update', type=str, default='https://github.com/esterTion/yumesute_master_db_diff')
+    return parser.parse_args()
 
 
 if __name__ == "__main__":
-    automatic_formation()
+    import argparse
+    import os
+    args = parse_args()
+    userdata_path = os.path.join(args.user)
+    character_master_path = os.path.join(args.data, 'CharacterMaster.json')
+    poster_ability_path = os.path.join(args.data, 'PosterAbilityMaster.json')
+    accessory_path = os.path.join(args.data, 'accessory_processed.json')
+    effect_master_path = os.path.join(args.data, 'EffectMaster.json')
+    automatic_formation(
+        userdata_path,
+        character_master_path,
+        poster_ability_path,
+        effect_master_path,
+        tuple(args.mandatory_characters),
+        tuple(args.mandatory_posters)
+    )

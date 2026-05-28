@@ -36,6 +36,32 @@ async def main():
         accessory_data = json.load(f)
     accessory_list = {item["CharacterBaseMasterId"]: item for item in accessory_data}
 
+    sync_queue, (accessory_task, saver_task) = start_pipeline(
+        accessory_user=accessory_user,
+        accessory_list=accessory_list,
+        api_url="http://127.0.0.1:3456/calc",
+        data_file=userdata_path,
+        sensenotation=1146,
+        leader=args.mandatory_leader,
+        score_only=True,
+        concurrency=10,
+        # save_func=save_result
+    )
+
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(  # ActorFormation.py
+        None,
+        automatic_formation,
+        userdata_path, character_master_path, poster_ability_path, effect_master_path,
+        tuple(args.mandatory_characters), tuple(args.mandatory_posters),
+        sync_queue
+    )
+    print("[DEBUG] StartForServer.py: automatic_formation completed")
+
+    await accessory_task
+    await saver_task
+    print("Finished")
+
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
