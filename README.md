@@ -7,10 +7,10 @@ ymst自动配队器
 
 首先, 你需要将你游戏账号的数据导出.
 
-唯一推荐的途径是通过 @[esterTion](https://github.com/esterTion) 提供的[引继码导出工具](https://redive.estertion.win/wds/calc/YumesuteExporter.exe), 提取账号的 .json 文件.
+唯一推荐的途径是通过 [@esterTion](https://github.com/esterTion) 提供的[引继码导出工具](https://redive.estertion.win/wds/calc/YumesuteExporter.exe), 提取账号的 .json 文件.
 当然想自己解包也行, 你需要确保数据文件的格式类似为:
 
-```json lines
+```text
 {
   "characters": [[142360,255,1,2,5,5],[150040,260,true,2,5,5],[Id,等级(略),觉醒(略),故事(略),技能(略),开花(略)]],
   "posters": [[230330,6,0],[330380,10,4],[Id,等级,突破次数]],
@@ -46,7 +46,7 @@ ymst自动配队器
 git clone https://github.com/esterTion/yumesute_master_db_diff
 ```
 
-该命令将会在你选择的当前 git bash 路径生成名为 `yumesute_master_db_diff` 的, 包含其内容的文件夹.
+该命令将会在终端的当前路径生成名为 `yumesute_master_db_diff` 的, 包含其内容的文件夹.
 
 - 若未安装 git, 则可复制下面所有命令, 在 Powershell 中点击右键粘贴:
 
@@ -67,9 +67,9 @@ foreach ($match in $matches) {
 }
 ```
 
-该命令将会在你选择的当前 git bash 路径直接下载每个文件.
+该命令将会在终端的当前路径直接下载每个文件.
 
-## 目前使用方法
+## 3. 目前使用方法
 
 已修改输入逻辑, 允许确定队长位置, 允许设置必选角色/海报, 允许固定必选角色/海报位置.
 
@@ -105,7 +105,7 @@ foreach ($match in $matches) {
 git bash your_path_to_root/scripts/teamup.sh [账号数据地址] [参数1] [值] [参数2] [值] [...]
 ```
 
-运行配队器. 输出根据 @[Ohnkyta](https://github.com/OhnkytaBlabdey) 的 ymst-calc-server 要求, 提供:
+运行配队器. 输出根据 [@Ohnkyta](https://github.com/OhnkytaBlabdey) 的 ymst-calc-server 要求, 提供:
 
 ```json
     {
@@ -123,4 +123,4 @@ git bash your_path_to_root/scripts/teamup.sh [账号数据地址] [参数1] [值
 
 至默认的端口 `3456` 上.
 
-(实际上server那边没做好, 角色/海报/饰品都套了网页版输入编队的 `partyManager` 的逻辑, 属无效的下标映射. **等待 @[Ohnkyta](https://github.com/OhnkytaBlabdey) 完善代码后才可使用**)
+(实际上server那边没做好, 角色/海报/饰品都套了网页版输入编队的 `partyManager` 的逻辑, 属无效的下标映射. **等待 [@Ohnkyta](https://github.com/OhnkytaBlabdey) 完善代码后才可使用**)
