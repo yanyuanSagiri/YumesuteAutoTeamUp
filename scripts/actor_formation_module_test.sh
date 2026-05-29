@@ -33,3 +33,5 @@ fi
 
 echo "Execute command: ${CMD[*]}"
 "${CMD[@]}"
+
+read -r -p "按回车键退出..."

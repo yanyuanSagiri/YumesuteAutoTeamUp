@@ -257,12 +257,12 @@ class CheckUnrepeated:
 
 
 def automatic_formation(
-        userdata_path="./Yumetest.json",
+        userdata_path="./Yumesute.json",
         character_master_path="./data/CharacterMaster.json",
         poster_ability_path="./data/PosterAbilityMaster.json",
         effect_master_path="./data/EffectMaster.json",
-        mandatory_characters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
-        mandatory_posters=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0),
+        mandatory_characters=(150010, 0, 150020, 0, 150030, 0, 150040, 0, 0, 0),
+        mandatory_posters=(330380, 0, 230120, 0, 0, 0, 0, 0, 0, 0),
         pipeline_queue=None
 ):
     print(f"[DEBUG] automatic_formation called, pipeline_queue is {'None' if pipeline_queue is None else 'Queue(maxsize=' + str(pipeline_queue.maxsize) + ')'}")
@@ -330,19 +330,20 @@ def parse_args():
 
 
 if __name__ == "__main__":
-    import argparse
-    import os
-    args = parse_args()
-    userdata_path = os.path.join(args.user)
-    character_master_path = os.path.join(args.data, 'CharacterMaster.json')
-    poster_ability_path = os.path.join(args.data, 'PosterAbilityMaster.json')
-    accessory_path = os.path.join(args.data, 'accessory_processed.json')
-    effect_master_path = os.path.join(args.data, 'EffectMaster.json')
-    automatic_formation(
-        userdata_path,
-        character_master_path,
-        poster_ability_path,
-        effect_master_path,
-        tuple(args.mandatory_characters),
-        tuple(args.mandatory_posters)
-    )
+    automatic_formation()
+    # import argparse
+    # import os
+    # args = parse_args()
+    # userdata_path = os.path.join(args.user)
+    # character_master_path = os.path.join(args.data, 'CharacterMaster.json')
+    # poster_ability_path = os.path.join(args.data, 'PosterAbilityMaster.json')
+    # accessory_path = os.path.join(args.data, 'accessory_processed.json')
+    # effect_master_path = os.path.join(args.data, 'EffectMaster.json')
+    # automatic_formation(
+    #     userdata_path,
+    #     character_master_path,
+    #     poster_ability_path,
+    #     effect_master_path,
+    #     tuple(args.mandatory_characters),
+    #     tuple(args.mandatory_posters)
+    # )
