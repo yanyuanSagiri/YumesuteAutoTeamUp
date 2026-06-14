@@ -6,13 +6,17 @@ from typing import Optional
 
 def processor_accessory(base_state, busy_chara, accessory_user, accessory_list, leader):
     """
-    Generate final status through accessory data.
+    Generate final status through accessory data. Items picked follow:
+    - 430220 Brilliant Stars！
+    - 330xx0 Birthday accessories
+    - 331540 黎明なジュリエットの指輪 default CT-5 (RandomEffectGroups: 13 Value: 1305 as Effect: 200045)
     Input: base status of characters and posters list[10], busy character for matching status list[idk],
            user's accessory data, preprocessed accessory list
     Output: all final status list[n][15]
     Reminder: If there's new essential accessory appended, plz reach out to me in a timely manner.
               [other solution]: Modify accessory_processed.json and add corresponding ID into "AccessoryId"
     注意事项: 如果出现了类似蝴蝶结的通用上位饰品, 请及时通过 qq 联系本人, 也可以或自行在 accessory_processed.json 中添加对应饰品 ID.
+    TODO(Frocean): Append filter from accessory_processed to userdata.
     """
     _default = 331710  # Time-sensitive parameter. Analysis if birthday/ct accessory doesn't increase score.
     a_default = {_default}

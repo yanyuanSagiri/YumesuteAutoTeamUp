@@ -1,5 +1,6 @@
 """
 ActorFormation module is used for building formation automatically.
+This version is for mandatory_posters formed [poster1, position1, ...]
 Input: relative files' path.
 Output: N-Top results among all status.
 """
@@ -18,25 +19,21 @@ class CheckUnrepeated:
     Output: A legal list for character on [:posit] axis, eg: [110010, 110020, ...]
     """
     def __init__(self):
-        self.chara_master = {  # characters' id
+        self.chara_master = {
             101, 102, 103, 104, 105, 106,
             201, 202, 203, 204, 205,
             301, 302, 303, 304, 305,
             401, 402, 403, 404, 405
         }
-        self.poste_dedupe = [  # deduplication for particular posters
-            [230090, 230100, 230110, 230120],  # troupe
-            [230510, 230570, 230640, 230720]   # fd series
-        ]
-        self.poste_map = {}  # memorize the initialization of deduplication
-        self._status = set()  # enum bottle for c/p status
+        self._status = set()
+        self._result_chara = []
         self._result_poste = []
         self.manda_chara = [0] * 5  # record mandatory characters and [index] position
         self.manda_poste = [0] * 5  # record mandatory posters and [index] position
         self.prior_chara = set()  # record mandatory characters with void position
         self.prior_poste = set()  # record mandatory posters with void position
-        # self.busy_charb = set()  # record busy characters' [BaseId] after processing priorities
-        # self.busy_poste = set()  # record busy posters' [BaseId] after processing priorities
+        self.busy_charb = set()  # record busy characters' [BaseId] after processing priorities
+        self.busy_poste = set()  # record busy posters' [BaseId] after processing priorities
         self.num_master = {1, 2, 3, 4, 5}
         self.state_base = [0, 0, 0, 0, 0]  # be used for initialize bfs status
         self.chara_mid2id = defaultdict(list)
@@ -69,12 +66,14 @@ class CheckUnrepeated:
 
     def urp_filter_dag(self, filter_c_p, poste_busy):
         # print(f"come in")
+        postb_bot = poste_busy.copy()
         c_p_bot = filter_c_p.supreme_arr.copy()
+        # print(c_p_bot)
         boolean = True
         while boolean:  # update current supreme queue by busy posters
             # print(f"check")
-            boolean = False  # check if status changed
-            for p in poste_busy:  # check busy poster's domination
+            boolean = False
+            for p in postb_bot:  # check busy poster's domination
                 if p not in c_p_bot:  # if busy poster in supreme
                     continue
                 p_son = filter_c_p.dominate[p]  # check posters it dominates
@@ -90,54 +89,36 @@ class CheckUnrepeated:
                         c_p_bot.add(son)
                         # print(f"add son {son} in supreme posters")
                         boolean = True  # status changed
-        postb_bot = set()
-        postb_not = []
-        for p in poste_busy:
-            if p in self.poste_map:  # collect posters in map
-                postb_bot.update(self.poste_map[p])
-            else:  # collect posters not in map
-                postb_not.append(p)
-        postb_bot.update(postb_not)
-        c_p_bot.difference_update(postb_bot)
         return c_p_bot
 
-    # def urp_filter_i(self, chara, poste, c_cache):  # initialize mandatory elements
-    def urp_filter_i(self, chara, poste):
-        for posters in self.poste_dedupe:  # initialization for particular posters deduplication
-            shared_set = set(posters)
-            for p in posters:
-                self.poste_map[p] = shared_set
-        for i in range(5):  # Deal with mandatory and prior character.
+    def urp_filter_i(self, charc, poste, c_cache):  # Initialize mandatory elements
+        # TODO(Frocean): Add preprocessing persistent domination DAG module at convenience
+        for i in range(5):
             i2 = i << 1
-            bid = chara[i2]
-            pos_c = chara[i2 + 1] - 1
-            # bool_either = False
-            if not pos_c < 0:  # mandatory character with position
-                self.manda_chara[pos_c] = bid
-                print(f"character{bid} at {pos_c}")
-                # bool_either = True
+            bid = charc[i2]
+            pos = charc[i2 + 1] - 1
+            bool_either = False
+            if not pos < 0:  # mandatory character with position
+                self.manda_chara[pos] = bid
+                bool_either = True
             elif bid:  # mandatory character without position
                 self.prior_chara.add(bid)
-                # bool_either = True
+                bool_either = True
+            if bool_either:
+                cbid = c_cache[bid].get("CharacterBaseMasterId", [])
+                for j in cbid:
+                    self.busy_charb.add(j)
             bid = poste[i2]
-            pos_p = poste[i2 + 1]
-            if bid and not pos_p:
+            pos = poste[i2 + 1] - 1
+            bool_either = False
+            if not pos < 0:  # mandatory poster with position
+                self.manda_poste[pos] = bid
+                bool_either = True
+            elif bid:  # mandatory poster without position
                 self.prior_poste.add(bid)
-            # if bool_either:
-            #     cbid = c_cache[bid].get("CharacterBaseMasterId", [])
-            #     for j in cbid:
-            #         self.busy_charb.add(j)
-            # bid = poste[i2]
-            # if bid:
-            #     self.busy_poste.add(bid)
-            # if not pos < 0:  # mandatory poster with position
-            #     self.manda_poste[pos] = bid
-            #     bool_either = True
-            # elif bid:  # mandatory poster without position
-            #     self.prior_poste.add(bid)
-            #     bool_either = True
-            # if bool_either:
-            #     self.busy_poste.add(bid)
+                bool_either = True
+            if bool_either:
+                self.busy_poste.add(bid)
 
     def urp_filter_n(self, num_busy=None):  # check {1, 2, 3, 4, 5} which is used and discard
         number_bot = self.num_master.copy()
@@ -146,24 +127,10 @@ class CheckUnrepeated:
                 number_bot.discard(n)
         return number_bot
 
-    def urp_filter_p(self, chara, poste):  # initialize mandatory posters for current status
-        # TODO(Frocean): Add preprocessing persistent domination DAG module at convenience
-        self.manda_poste = [0] * 5
-        charp = list(chara)
-        for i in range(5):  # Deal with mandatory character's poster. Others will process in poster processor.
-            i2 = i << 1
-            bid = poste[i2]
-            pos_p = poste[i2 + 1]
-            # bool_either = False
-            if not pos_p < 0:
-                for n, c in enumerate(charp):
-                    if pos_p == c:
-                        self.manda_poste[n] = bid
-                        break
-
     def processor_character(self, c_cache):
         stime = time.time()
         queue = []
+        self._result_chara = []
         self._status = set()
         manda_busy = {i+1 for i in range(5) if self.manda_chara[i]}  # initialize busy position
         leng = len(self.prior_chara)
@@ -201,10 +168,6 @@ class CheckUnrepeated:
                     self._status.add(state_bot)
                     queue.append(state_bot)
             leng -= 1
-        if not queue:
-            state_bot = tuple(self.manda_chara)
-            self._status.add(state_bot)
-            queue.append(state_bot)
         for i in range(leng):  # complete the status for characters
             queue_next = []
             for state in queue:
@@ -226,7 +189,6 @@ class CheckUnrepeated:
     def processor_poster(self, clist, solutions):
         stime = time.time()
         queue = []
-        # print(self.manda_poste)
         self._result_poste = []
         self._status = set()
         manda_busy = {i+1 for i in range(5) if self.manda_poste[i]}  # initialize busy position
@@ -265,10 +227,6 @@ class CheckUnrepeated:
                     self._status.add(state_bot)
                     queue.append(state_bot)
             leng -= 1
-        if not queue:
-            state_bot = tuple(self.manda_poste)
-            self._status.add(state_bot)
-            queue.append(state_bot)
         for i in range(leng):
             queue_next = []
             for state in queue:
@@ -287,7 +245,7 @@ class CheckUnrepeated:
             queue = queue_next
         for q in queue:
             res_bot = [None] * 10
-            res_bot[:5] = clist  # TODO(Frocean): Send c/p status respectively may accelerate a lot.
+            res_bot[:5] = clist
             res_bot[5:10] = list(q)
             self._result_poste.append(tuple(res_bot))
         # for q in queue:
@@ -305,7 +263,7 @@ def automatic_formation(
         poster_ability_path="./data/PosterAbilityMaster.json",
         effect_master_path="./data/EffectMaster.json",
         mandatory_characters=(150010, 0, 150020, 0, 150030, 0, 150040, 0, 0, 0),
-        mandatory_posters=(330380, 150030, 230120, 150040, 0, 0, 0, 0, 0, 0),
+        mandatory_posters=(330380, 0, 230120, 0, 0, 0, 0, 0, 0, 0),
         pipeline_queue=None
 ):
     start_time = time.time()
@@ -333,7 +291,7 @@ def automatic_formation(
             checker.chara_mid2id[c].append(c_id)
         c_cache[c_id] = c_data_filtered
     # print(c_cache)
-    checker.urp_filter_i(mandatory_characters, mandatory_posters)
+    checker.urp_filter_i(mandatory_characters, mandatory_posters, c_cache)
     poster_solutions = find_poster_solutions(userdata_path,
                                              character_master_path,
                                              poster_ability_path,
@@ -344,8 +302,6 @@ def automatic_formation(
     put_count = 0
     for r in result_c:
         print(f"check posters...")
-        # print(r)
-        checker.urp_filter_p(r, mandatory_posters)
         charb_id = [None] * 5
         for n, c in enumerate(r):
             charb_id[n-1] = c_cache[c].get("CharacterBaseMasterId", [])
