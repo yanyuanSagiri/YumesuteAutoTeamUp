@@ -51,10 +51,11 @@ def processor_accessory(base_state, busy_chara, accessory_user, accessory_list, 
 
     a_result = []
     for state in a_status:
-        state_bot = {"leader": leader,
-                     "actors": base_state[:5],
+        state_bot = {"actors": base_state[:5],
                      "posters": base_state[5:10],
                      "accessories": state}
+        if leader is not None:
+            state_bot["leader"] = leader
         a_result.append(state_bot)
         # state_bot[:10] = base_state
         # state_bot[10:15] = list(state)

@@ -14,7 +14,7 @@ def parse_args():
     parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10, default=[0]*10,
                         help='交替输入必选角色及其固定位置, 不选则填0, 以空格分割')
     parser.add_argument('-mp', '--mandatory_posters', type=int, nargs=10, default=[0]*10,
-                        help='交替输入必选海报及其对应位置, 不选则填0, 以空格分割')
+                        help='交替输入必选海报及其绑定角色, 不选则填0, 以空格分割')
     parser.add_argument('-ml', '--mandatory_leader', type=int, default=0, help='固定队长位置, 不选则填0')
     return parser.parse_args()
 

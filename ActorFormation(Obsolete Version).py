@@ -1,8 +1,10 @@
 """
 ActorFormation module is used for building formation automatically.
-This version is for mandatory_posters formed [poster1, position1, ...]
+This version is for mandatory_posters formed [poster1, position1, ...], which may be used at special mode.
 Input: relative files' path.
 Output: N-Top results among all status.
+
+Problems remain: no deduplication at DAG.
 """
 import json
 import time
