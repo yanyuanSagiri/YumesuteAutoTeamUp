@@ -312,13 +312,17 @@ class PosterSolution:
 
 
 def find_poster_solutions(
-        userdata_path="./Yumesute.json",
+        userdata_path=None,
         character_master_path="./Data/CharacterMaster.json",
         poster_ability_path="./Data/PosterAbilityMaster.json",
         effect_master_path="./Data/EffectMaster.json",
+        userdata=None
 ):
-    with open(userdata_path, "r", encoding="utf-8") as f:
-        user_data = json.load(f)
+    if userdata is not None:
+        user_data = userdata
+    else:
+        with open(userdata_path, "r", encoding="utf-8") as f:
+            user_data = json.load(f)
     character_list = user_data["characters"]
     poster_list = user_data["posters"]
 
@@ -384,4 +388,4 @@ Default_filter = True
 tot = 0
 
 if __name__ == "__main__":
-    solution = find_poster_solutions()
+    solution = find_poster_solutions(userdata_path="./Yumesute.json")

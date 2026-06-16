@@ -300,18 +300,22 @@ class CheckUnrepeated:
 
 
 def automatic_formation(
-        userdata_path="./Yumesute.json",
+        userdata_path=None,
         character_master_path="./data/CharacterMaster.json",
         poster_ability_path="./data/PosterAbilityMaster.json",
         effect_master_path="./data/EffectMaster.json",
         mandatory_characters=(150010, 0, 150020, 0, 150030, 0, 150040, 0, 0, 0),
         mandatory_posters=(330380, 150030, 230120, 150040, 0, 0, 0, 0, 0, 0),
-        pipeline_queue=None
+        pipeline_queue=None,
+        userdata=None
 ):
     start_time = time.time()
 
-    with open(userdata_path, "r", encoding="utf-8") as f:
-        user_data = json.load(f)
+    if userdata is not None:
+        user_data = userdata
+    else:
+        with open(userdata_path, "r", encoding="utf-8") as f:
+            user_data = json.load(f)
     character_list = user_data["characters"]
     # poster_list = user_data["posters"]
 
@@ -337,7 +341,8 @@ def automatic_formation(
     poster_solutions = find_poster_solutions(userdata_path,
                                              character_master_path,
                                              poster_ability_path,
-                                             effect_master_path)
+                                             effect_master_path,
+                                             userdata)
     print(f"check characters...")
     result_c = checker.processor_character(c_cache)
     # print(f"[DEBUG] processor_character done, {len(result_c)} character combinations")
@@ -374,7 +379,7 @@ def automatic_formation(
 
 
 if __name__ == "__main__":
-    automatic_formation()
+    automatic_formation(userdata_path="./Yumetest.json")
     # import argparse
     # import os
     # args = parse_args()
