@@ -129,7 +129,7 @@ git bash your_path_to_root/scripts/teamup.sh [账号数据地址] [参数1] [值
     {
         "data_file": "example.json",
         "team": {
-            "actors": [142360, 150040, 150030, 150020, 150010],
+            "characters": [142360, 150040, 150030, 150020, 150010],
             "posters": [340210, 330230, 330290, 230840, 330310],
             "accessories": [430220, 331710, 331710, 331710, 331710],
             "leader": 0
@@ -139,9 +139,9 @@ git bash your_path_to_root/scripts/teamup.sh [账号数据地址] [参数1] [值
     }
 ```
 
-至默认的端口 `3456` 上.
+至默认的端口 `3456` 上. 需要注意的是, server 所需的是 `actors` 而非 `characters`, 但是 server 现在用不了, 状态在适配其他方案.
 
-~~但那边有点小问题, 而且我看 server 这种有点太影响效率了, 毕竟这玩意儿是计算密集型, 还是等适配吧~~
+~~而且我看 server 这种有点太影响效率了~~
 
 ### 3.3 结果筛选与统计
 

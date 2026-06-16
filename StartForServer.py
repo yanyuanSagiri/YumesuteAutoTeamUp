@@ -4,7 +4,7 @@ import asyncio
 import json
 
 from ActorFormation import automatic_formation
-from pipeline_for_server import start_pipeline
+from pipeline import start_pipeline
 
 
 def parse_args():
