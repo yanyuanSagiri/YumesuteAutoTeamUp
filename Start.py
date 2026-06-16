@@ -9,14 +9,14 @@ import queue
 import sys
 
 from ActorFormation import automatic_formation
-from pipeline_for_server import processor_accessory
+from pipeline import processor_accessory
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Yumesute auto team-up')
     parser.add_argument('user', nargs='?', metavar='File name for user data', default='Yumesute.json', help='账号数据名称')
     parser.add_argument('-d', '--data', metavar='DIR for game data', default='data', help='游戏内资源路径')
-    parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10,
+    parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10,  # TODO(Frocean): set default after test.
                         default=[150010, 0, 150020, 0, 150030, 0, 150040, 0, 0, 0],
                         help='交替输入必选角色及其固定位置, 不选则填0, 以空格分割')
     parser.add_argument('-mp', '--mandatory_posters', type=int, nargs=10,
@@ -102,7 +102,16 @@ async def main():
     if not line:
         print(json.dumps({"error": "No user data received"}))
         return
-    user_data = json.loads(line.strip())
+    try:
+        user_data = json.loads(line.strip())
+    except json.JSONDecodeError as e:
+        print(json.dumps({"error": f"Invalid user JSON: {e}"}))
+        return
+    required_fields = ["characters", "posters", "accessories"]
+    missing = [f for f in required_fields if f not in user_data]
+    if missing:
+        print(json.dumps({"error": f"Missing required fields: {missing}"}))
+        return
 
     # with open(userdata_path, "r", encoding="utf-8") as f:
     #     user_data = json.load(f)
