@@ -3,7 +3,7 @@ import queue
 import aiohttp
 
 
-def processor_accessory(base_state, busy_chara, accessory_user, accessory_list, leader):
+def processor_accessory(base_state, busy_chara, accessory_user, accessory_list, leader=None):
     """
     Generate final status through accessory data.
     Input: base status of characters and posters list[10], busy character for matching status list[idk],
@@ -50,15 +50,18 @@ def processor_accessory(base_state, busy_chara, accessory_user, accessory_list, 
         a_busy.discard(a1)
 
     a_result = []
-    for state in a_status:
-        state_bot = {"characters": base_state[:5],
-                     "posters": base_state[5:10],
-                     "accessories": state}
-        if leader is not None:
-            state_bot["leader"] = leader
-        a_result.append(state_bot)
-        # state_bot[:10] = base_state
-        # state_bot[10:15] = list(state)
+    for state_c_p in base_state:
+        for state_a in a_status:
+            a_result.append(state_c_p + state_a)
+    # for server:
+    # for state_c_p in base_state:
+    #     for state_a in a_status:
+    #         state_bot = {"characters": state_c_p[:5],
+    #                      "posters": state_c_p[5:10],
+    #                      "accessories": state_a}
+    #         if leader is not None:
+    #             state_bot["leader"] = leader
+    #         a_result.append(state_bot)
     return a_result
 
 

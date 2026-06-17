@@ -130,6 +130,14 @@ git bash your_path_to_root/scripts/teamup.sh [账号数据地址] [参数1] [值
 
 `Start.py` 的输出根据 [@演员](https://github.com/yanyuanSagiri) 的要求, 在终端提供 json 字符串的输出流:
 
+```json lines
+[150040, 150010, 150020, 150030, 140930, 230120, 230980, 330250, 330380, 230270, 331710, 430220, 331710, 331710, 330170]
+[150040, 150010, 150020, 150030, 140930, 230120, 230980, 330060, 330380, 230340, 331710, 331710, 331710, 331710, 331710]
+```
+
+`15` 个按顺序五五为角色, 海报和饰品的状态.
+
+
 `StartForServer.py` 的输出根据 [@Ohnkyta](https://github.com/OhnkytaBlabdey) 的 ymst-calc-server 要求, 提供:
 
 ```json
@@ -146,9 +154,9 @@ git bash your_path_to_root/scripts/teamup.sh [账号数据地址] [参数1] [值
     }
 ```
 
-至默认的端口 `3456` 上. 需要注意的是, server 所需的是 `actors` 而非 `characters`, 但是 server 现在用不了, 状态在适配其他方案.
+至默认的端口 `3456` 上. 需要注意的是, server 所需的是 `actors` 而非 `characters`, 但是 server 现在用不了, 对应代码在适配其他方案, 所以这部分使用时需修改.
 
-~~而且我看 server 这种有点太影响效率了~~
+此外, 饰品处理结果传出的结果也非适配 server, 需要把里面部分代码注释, 并把部分注释代码启用.
 
 ### 3.3 结果筛选与统计
 
