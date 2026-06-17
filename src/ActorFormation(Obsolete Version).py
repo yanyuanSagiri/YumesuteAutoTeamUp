@@ -9,7 +9,7 @@ Problems remain: no deduplication at DAG.
 import json
 import time
 
-from FindPosterSolutions import find_poster_solutions, CharacterFilter
+from .FindPosterSolutions import find_poster_solutions, CharacterFilter
 from collections import defaultdict
 
 

@@ -3,8 +3,8 @@ import os
 import asyncio
 import json
 
-from ActorFormation import automatic_formation
-from pipeline import start_pipeline
+from src.ActorFormation import automatic_formation
+from src.pipeline import start_pipeline
 
 
 def parse_args():

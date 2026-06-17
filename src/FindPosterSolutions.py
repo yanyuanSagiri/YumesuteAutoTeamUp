@@ -388,4 +388,4 @@ Default_filter = True
 tot = 0
 
 if __name__ == "__main__":
-    solution = find_poster_solutions(userdata_path="./Yumesute.json")
+    solution = find_poster_solutions(userdata_path="../Yumesute.json")

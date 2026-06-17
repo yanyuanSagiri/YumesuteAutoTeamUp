@@ -39,7 +39,7 @@ ymst自动配队器
 
 ---
 
-如果因为网络或者其他问题导致自动更新脚本不可用, 你也可以暂时通过以下任一方式进行游戏数据的部署. **注意会下载全部文件**. 但其他文件在 server 中可能用到, 顺手的事儿.
+如果因为网络或者其他问题导致自动更新脚本不可用, 你也可以暂时通过以下任一方式进行游戏数据的部署. **注意会下载全部文件**. 但其他文件在其他模块中也可能~~一定~~用到, 顺手的事儿.
 
 - 直接访问及时更新的[Database地址](https://github.com/esterTion/yumesute_master_db_diff)进行下载.
 - 等效地, 可以在本地的 git bash 中执行
@@ -93,7 +93,12 @@ foreach ($match in $matches) {
 
 ### 3.1 开始使用
 
-已提供简易脚本于 `/scripts` 中. 你可以通过运行其中的 `teamup.sh` 开始配队. (推荐使用 git bash)
+首先, 你必须将你自己的游戏账号的数据 `xxx.json` 放到根目录. ~~虽然按理来说应该放data, 但感觉放根目录更方便使用.~~
+
+然后, 可以使用 `/scripts` 中的已提供简易脚本. 你可以:
+- 通过运行其中的 `update.sh` 更新游戏内数据文件至最新版本.
+- 随后运行其中的 `teamup.sh` 开始配队.
+- 推荐使用 git bash 终端. 否则你需要自己打开 `teamup.sh` 文件去手动修改 `USER_NAME` 等字段的值. ~~好像这样更方便~~
 
 在终端通过输入指定参数可以实现个性化配队. 
 
@@ -118,12 +123,14 @@ git bash your_path_to_root/scripts/teamup.sh [账号数据地址] [参数1] [值
 | `user` | `str`     | `Yumesute.json`      | 否   | 是你的用户数据 `xxx.json`. 把它放在配队器项目的根目录. <br> 使用时无需输入 `user`, 直接输入 `xxx.json` 即可. <br> **名称中间不允许空格 ~~`x xx.json`~~** |
 | `-mc`  | `int[10]` | `[0]*10`             | 否   | 结构类似 `[必选角色1, 其固定位置1, 必选角色2, ...]` <br> 无需求则补 `0`                                                              |
 | `-mp`  | `int[10]` | `[0]*10`             | 否   | 结构类似 `[必选海报1, 绑定的角色i, 必选海报2, ...]` <br> 无需求则补 `0`                                                              |
-| `-ml`  | `int`     | 0                    | 否   | 固定队长位置                                                                                                         |
+| `-ml`  | `int`     | 0                    | 否   | 固定队长位置. 但是暂时不使用, 预估该参数将由计算器自己处理, 没必要发过来.                                                                       |
 | `-d`   | `string`  | `/path/to/your/data` | 否   | 本地存储游戏内数据资源的路径                                                                                                 |
 
 ### 3.2 配队状态输出格式与请求体相关
 
-输出根据 [@Ohnkyta](https://github.com/OhnkytaBlabdey) 的 ymst-calc-server 要求, 提供:
+`Start.py` 的输出根据 [@演员](https://github.com/yanyuanSagiri) 的要求, 在终端提供 json 字符串的输出流:
+
+`StartForServer.py` 的输出根据 [@Ohnkyta](https://github.com/OhnkytaBlabdey) 的 ymst-calc-server 要求, 提供:
 
 ```json
     {

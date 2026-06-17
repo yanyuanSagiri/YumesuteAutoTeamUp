@@ -8,13 +8,13 @@ import json
 import queue
 import sys
 
-from ActorFormation import automatic_formation
-from pipeline import processor_accessory
+from src.ActorFormation import automatic_formation
+from src.pipeline import processor_accessory
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Yumesute auto team-up')
-    parser.add_argument('user', nargs='?', metavar='File name for user data', default='Yumesute.json', help='账号数据名称')
+    # parser.add_argument('user', nargs='?', metavar='File name for user data', default='Yumesute.json', help='账号数据名称')
     parser.add_argument('-d', '--data', metavar='DIR for game data', default='data', help='游戏内资源路径')
     parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10,  # TODO(Frocean): set default after test.
                         default=[150010, 0, 150020, 0, 150030, 0, 150040, 0, 0, 0],
