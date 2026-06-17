@@ -7,9 +7,10 @@ import urllib3
 from urllib3.exceptions import InsecureRequestWarning
 
 urllib3.disable_warnings(InsecureRequestWarning)
+os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 
 API_BASE = "https://api.github.com/repos/esterTion/yumesute_master_db_diff/contents"
-LOCAL_DATA_DIR = "data"
+LOCAL_DATA_DIR = "./data"
 FILES_TO_UPDATE = [
     "CharacterMaster.json",
     "EffectMaster.json",

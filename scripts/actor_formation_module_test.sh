@@ -11,7 +11,7 @@ MANDATORY_POSTERS=(330380 0 0 0 0 0 0 0 0 0)
 MANDATORY_LEADER=0
 UPDATE_REPO="https://github.com/esterTion/yumesute_master_db_diff"
 
-CMD=(python "ActorFormation.py" "$USER_NAME")
+CMD=(python -m src.ActorFormation "$USER_NAME")
 
 CMD+=(-d "$DATA_DIR")
 

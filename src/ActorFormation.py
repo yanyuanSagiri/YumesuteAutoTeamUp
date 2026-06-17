@@ -6,13 +6,13 @@ Output: N-Top results among all status.
 import json
 import time
 
-from FindPosterSolutions import find_poster_solutions, CharacterFilter
+from .FindPosterSolutions import find_poster_solutions, CharacterFilter
 from collections import defaultdict
 
 
 class CheckUnrepeated:
     """
-    Accelerate auto formation for actors by pruning illegal characters status.
+    Accelerate auto formation for actors by pruning illegal characters' status.
     Some important data is stored in this class simultaneously.
     Input: charm(c_base_id), poste(p_base_id), posit(position of leader), c_cache
     Output: A legal list for character on [:posit] axis, eg: [110010, 110020, ...]

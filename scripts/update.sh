@@ -23,6 +23,6 @@ if [ -z "$PYTHON_CMD" ]; then
     exit 1
 fi
 
-"$PYTHON_CMD" update.py
+"$PYTHON_CMD" utils/update.py
 
 read -r -p "按回车键退出..."
