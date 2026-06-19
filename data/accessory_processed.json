@@ -1,57 +1,57 @@
 [
   {
-    "CharacterBaseMasterId": 101, "AccessoryId": [430220, 330010, 331540]
+    "CharacterBaseMasterId": 101, "AccessoryId": [430220, 330010, 430210]
   },
   {
-    "CharacterBaseMasterId": 102, "AccessoryId": [430220, 330020, 331540]
+    "CharacterBaseMasterId": 102, "AccessoryId": [430220, 330020, 430210]
   },
   {
-    "CharacterBaseMasterId": 103, "AccessoryId": [430220, 330030]
+    "CharacterBaseMasterId": 103, "AccessoryId": [430220, 330030, 430060, 430090, 430210]
   },
   {
-    "CharacterBaseMasterId": 104, "AccessoryId": [430220, 330040]
+    "CharacterBaseMasterId": 104, "AccessoryId": [430220, 330040, 430210]
   },
   {
-    "CharacterBaseMasterId": 105, "AccessoryId": [430220, 330050]
+    "CharacterBaseMasterId": 105, "AccessoryId": [430220, 330050, 430060, 430210]
   },
   {
-    "CharacterBaseMasterId": 106, "AccessoryId": [430220, 330060]
+    "CharacterBaseMasterId": 106, "AccessoryId": [430220, 330060, 430060, 430090, 430210]
   },
   {
-    "CharacterBaseMasterId": 201, "AccessoryId": [430220, 330070]
+    "CharacterBaseMasterId": 201, "AccessoryId": [430220, 330070, 430200]
   },
   {
     "CharacterBaseMasterId": 202, "AccessoryId": [430220, 330080]
   },
   {
-    "CharacterBaseMasterId": 203, "AccessoryId": [430220, 330090]
+    "CharacterBaseMasterId": 203, "AccessoryId": [430220, 330090, 430200]
   },
   {
-    "CharacterBaseMasterId": 204, "AccessoryId": [430220, 330100]
+    "CharacterBaseMasterId": 204, "AccessoryId": [430220, 330100, 430200]
   },
   {
     "CharacterBaseMasterId": 205, "AccessoryId": [430220, 330110]
   },
   {
-    "CharacterBaseMasterId": 301, "AccessoryId": [430220, 330120]
+    "CharacterBaseMasterId": 301, "AccessoryId": [430220, 330120, 430060]
   },
   {
-    "CharacterBaseMasterId": 302, "AccessoryId": [430220, 330130]
+    "CharacterBaseMasterId": 302, "AccessoryId": [430220, 330130, 430090]
   },
   {
-    "CharacterBaseMasterId": 303, "AccessoryId": [430220, 330140]
+    "CharacterBaseMasterId": 303, "AccessoryId": [430220, 330140, 430090]
   },
   {
-    "CharacterBaseMasterId": 304, "AccessoryId": [430220, 330150]
+    "CharacterBaseMasterId": 304, "AccessoryId": [430220, 330150, 430090, 430060]
   },
   {
-    "CharacterBaseMasterId": 305, "AccessoryId": [430220, 330160]
+    "CharacterBaseMasterId": 305, "AccessoryId": [430220, 330160, 430060]
   },
   {
-    "CharacterBaseMasterId": 401, "AccessoryId": [430220, 330170]
+    "CharacterBaseMasterId": 401, "AccessoryId": [430220, 330170, 430200, 430210]
   },
   {
-    "CharacterBaseMasterId": 402, "AccessoryId": [430220, 330180]
+    "CharacterBaseMasterId": 402, "AccessoryId": [430220, 330180, 430200, 430210]
   },
   {
     "CharacterBaseMasterId": 403, "AccessoryId": [430220, 330190]
@@ -60,6 +60,6 @@
     "CharacterBaseMasterId": 404, "AccessoryId": [430220, 330200]
   },
   {
-    "CharacterBaseMasterId": 405, "AccessoryId": [430220, 330210]
+    "CharacterBaseMasterId": 405, "AccessoryId": [430220, 330210, 430200, 430210]
   }
 ]
