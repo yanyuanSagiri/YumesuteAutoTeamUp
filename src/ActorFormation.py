@@ -324,7 +324,7 @@ def automatic_formation(
     characters_id_master = {item["Id"]: item for item in characters_data}
 
     current_time = time.time() - start_time
-    print(f"check data in {current_time}s")
+    # print(f"check data in {current_time}s")
 
     c_cache = {}
     checker = CheckUnrepeated()
