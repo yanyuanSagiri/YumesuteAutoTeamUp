@@ -4,7 +4,7 @@ This version is for mandatory_posters formed [poster1, position1, ...], which ma
 Input: relative files' path.
 Output: N-Top results among all status.
 
-Problems remain: no deduplication at DAG.
+TODO(Frocean): Problems remain: no deduplication at DAG.
 """
 import json
 import time
@@ -34,8 +34,8 @@ class CheckUnrepeated:
         self.manda_poste = [0] * 5  # record mandatory posters and [index] position
         self.prior_chara = set()  # record mandatory characters with void position
         self.prior_poste = set()  # record mandatory posters with void position
-        self.busy_charb = set()  # record busy characters' [BaseId] after processing priorities
-        self.busy_poste = set()  # record busy posters' [BaseId] after processing priorities
+        self.busy_charb = set()  # [Unused] record busy characters' [BaseId] after processing priorities
+        self.busy_poste = set()  # [Unused] record busy posters' [BaseId] after processing priorities
         self.num_master = {1, 2, 3, 4, 5}
         self.state_base = [0, 0, 0, 0, 0]  # be used for initialize bfs status
         self.chara_mid2id = defaultdict(list)
@@ -250,20 +250,15 @@ class CheckUnrepeated:
             res_bot[:5] = clist
             res_bot[5:10] = list(q)
             self._result_poste.append(tuple(res_bot))
-        # for q in queue:
-        #     res_bot = [None] * 10
-        #     res_bot[0:9:2] = clist
-        #     res_bot[1:10:2] = list(q)
-        #     self._result_poste.append(tuple(res_bot))
         print(f"cost time {time.time() - stime}s in {len(queue)} solutions")
         return self._result_poste
 
 
 def automatic_formation(
-        userdata_path="./Yumesute.json",
-        character_master_path="./data/CharacterMaster.json",
-        poster_ability_path="./data/PosterAbilityMaster.json",
-        effect_master_path="./data/EffectMaster.json",
+        userdata_path="../Yumesute.json",
+        character_master_path="../data/CharacterMaster.json",
+        poster_ability_path="../data/PosterAbilityMaster.json",
+        effect_master_path="../data/EffectMaster.json",
         mandatory_characters=(150010, 0, 150020, 0, 150030, 0, 150040, 0, 0, 0),
         mandatory_posters=(330380, 0, 230120, 0, 0, 0, 0, 0, 0, 0),
         pipeline_queue=None
@@ -301,7 +296,7 @@ def automatic_formation(
     print(f"check characters...")
     result_c = checker.processor_character(c_cache)
     # print(f"[DEBUG] processor_character done, {len(result_c)} character combinations")
-    put_count = 0
+    # put_count = 0
     for r in result_c:
         print(f"check posters...")
         charb_id = [None] * 5
@@ -318,34 +313,5 @@ def automatic_formation(
         pipeline_queue.put(None)
 
 
-# def parse_args():
-#     parser = argparse.ArgumentParser(description='Yumesute auto team-up')
-#     parser.add_argument('user', nargs='?', metavar='File name for user data', default='Yumetest.json', help='账号数据名称')
-#     parser.add_argument('-d', '--data', metavar='DIR for server data', default='data', help='服务器内资源路径')
-#     parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10, default=[0]*10,
-#                         help='交替输入必选角色及其固定位置, 不选则填0, 以空格分割')
-#     parser.add_argument('-mp', '--mandatory_posters', type=int, nargs=10, default=[0]*10,
-#                         help='交替输入必选海报及其对应位置, 不选则填0, 以空格分割')
-#     parser.add_argument('-ml', '--mandatory_leader', type=int, default=0, help='固定队长位置, 不选则填0')
-#     parser.add_argument('-u', '--update', type=str, default='https://github.com/esterTion/yumesute_master_db_diff')
-#     return parser.parse_args()
-
-
 if __name__ == "__main__":
     automatic_formation()
-    # import argparse
-    # import os
-    # args = parse_args()
-    # userdata_path = os.path.join(args.user)
-    # character_master_path = os.path.join(args.data, 'CharacterMaster.json')
-    # poster_ability_path = os.path.join(args.data, 'PosterAbilityMaster.json')
-    # accessory_path = os.path.join(args.data, 'accessory_processed.json')
-    # effect_master_path = os.path.join(args.data, 'EffectMaster.json')
-    # automatic_formation(
-    #     userdata_path,
-    #     character_master_path,
-    #     poster_ability_path,
-    #     effect_master_path,
-    #     tuple(args.mandatory_characters),
-    #     tuple(args.mandatory_posters)
-    # )

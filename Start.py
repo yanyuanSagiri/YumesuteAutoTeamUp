@@ -1,7 +1,6 @@
 """
 python Start.py < Yumetest.json
 """
-import argparse
 import os
 import asyncio
 import json
@@ -9,25 +8,8 @@ import queue
 import sys
 
 from src.ActorFormation import automatic_formation
-from src.pipeline import processor_accessory
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Yumesute auto team-up')
-    # parser.add_argument('user', nargs='?', metavar='File name for user data', default='Yumesute.json', help='账号数据名称')
-    parser.add_argument('-d', '--data', metavar='DIR for game data', default='data', help='游戏内资源路径')
-    parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10,  # TODO(Frocean): set default after test.
-                        default=[150010, 0, 150020, 0, 150030, 0, 150040, 0, 0, 0],
-                        help='交替输入必选角色及其固定位置, 不选则填0, 以空格分割')
-    parser.add_argument('-mp', '--mandatory_posters', type=int, nargs=10,
-                        default=[330380, 150030, 230120, 150040, 0, 0, 0, 0, 0, 0],
-                        help='交替输入必选海报及其绑定角色, 不选则填0, 以空格分割')
-    # parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10, default=[0]*10,
-    #                     help='交替输入必选角色及其固定位置, 不选则填0, 以空格分割')
-    # parser.add_argument('-mp', '--mandatory_posters', type=int, nargs=10, default=[0]*10,
-    #                     help='交替输入必选海报及其绑定角色, 不选则填0, 以空格分割')
-    # parser.add_argument('-ml', '--mandatory_leader', type=int, default=0, help='固定队长位置, 不选则填0')
-    return parser.parse_args()
+from src.FindAccessorySolutions import processor_accessory
+from src.args import parse_args
 
 
 async def stdin_reader(fin: asyncio.Event):
@@ -42,7 +24,7 @@ async def stdin_reader(fin: asyncio.Event):
             continue
         try:
             msg = json.loads(line)
-        except Exception:
+        except json.JSONDecodeError:
             continue
         if msg.get("FIN"):
             fin.set()
@@ -66,8 +48,7 @@ async def state_expander(
         sync_queue: queue.Queue,
         out_queue: asyncio.Queue,
         accessory_user: list,
-        accessory_list: dict,
-        leader=None
+        accessory_list: dict
 ):
     loop = asyncio.get_running_loop()
     while True:  # get actor formations
@@ -81,7 +62,7 @@ async def state_expander(
 
         # process accessories
         expanded_teams = await loop.run_in_executor(
-            None, processor_accessory, base_state, busy_chara, accessory_user, accessory_list, leader
+            None, processor_accessory, base_state, busy_chara, accessory_user, accessory_list
         )
 
         for team in expanded_teams:
