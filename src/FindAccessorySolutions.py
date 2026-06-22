@@ -18,6 +18,7 @@ def processor_accessory(base_state, busy_chara, accessory_user, accessory_list):
     a_status = set()
     a_busy = set()
     a_user = {al[0] for al in accessory_user}
+    # print(base_state)
 
     _default = 331670  # 48%
     # _default = 331710  # Time-sensitive parameter. Analysis if birthday/ct accessory doesn't increase score.

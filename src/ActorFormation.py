@@ -116,7 +116,7 @@ class CheckUnrepeated:
             # bool_either = False
             if not pos_c < 0:  # mandatory character with position
                 self.manda_chara[pos_c] = bid
-                print(f"character{bid} at {pos_c}")
+                # print(f"character{bid} at {pos_c}")
                 # bool_either = True
             elif bid:  # mandatory character without position
                 self.prior_chara.add(bid)
@@ -211,6 +211,7 @@ class CheckUnrepeated:
         return queue
 
     def processor_poster(self, clist, solutions):
+        # print(clist)
         stime = time.time()
         queue = []
         # print(self.manda_poste)
@@ -244,6 +245,8 @@ class CheckUnrepeated:
         length = 5 - length - len(manda_busy)
         if length == 5:  # Why I code this module again?
             for n in self.urp_filter_n():
+                # if clist == (150030, 142420, 150020, 150040, 150010):
+                #     print(f"check for first time, now n: {n}, chara: {clist[n-1]}")
                 # print(f"clist: {clist}")
                 for p in solutions[clist[n-1]].supreme_arr:  # feel free, feel free
                     state_bot = list(self.state_base)
@@ -335,7 +338,8 @@ def automatic_formation(
         charb_id = [None] * 5
         for n, c in enumerate(r):
             charb_id[n-1] = c_cache[c].get("CharacterBaseMasterId", [])
-        result = checker.processor_poster(list(r), poster_solutions)
+        # print(charb_id)
+        result = checker.processor_poster(r, poster_solutions)
         if pipeline_queue is not None:
             pipeline_queue.put({"Result": result, "CharacterBaseMasterId": charb_id})
         #     put_count += 1

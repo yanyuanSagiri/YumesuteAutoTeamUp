@@ -1,5 +1,5 @@
 """
-python Start.py < Yumetest.json
+python Start.py < test.json
 """
 import os
 import asyncio
@@ -83,11 +83,18 @@ async def main():
     if not line:
         print(json.dumps({"error": "No user data received"}))
         return
+
+    # line = line.lstrip('\ufeff').strip()
+    # if not line:
+    #     print(json.dumps({"error": "No user data received"}))
+    #     return
+
     try:
         user_data = json.loads(line.strip())
     except json.JSONDecodeError as e:
         print(json.dumps({"error": f"Invalid user JSON: {e}"}))
         return
+
     required_fields = ["characters", "posters", "accessories"]
     missing = [f for f in required_fields if f not in user_data]
     if missing:

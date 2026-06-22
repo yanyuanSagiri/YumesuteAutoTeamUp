@@ -11,7 +11,7 @@ cd "$PROJECT_ROOT" || exit 1
 
 # 默认值
 DATA_DIR="data"
-USER_DATA_PATH="${PROJECT_ROOT}/Yumesute.json"
+USER_DATA_PATH="${PROJECT_ROOT}/Yumetest.json"
 
 DATA_SET=false
 MC_SET=false

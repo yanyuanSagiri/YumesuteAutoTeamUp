@@ -162,7 +162,7 @@ class PosterFilter:
             v = trigger["Value"]
             if t == "Attribute":  # decrease 6410
                 v = self.n2attr.get(v, None)
-                if v in character["Attribute"]:
+                if v not in character["Attribute"]:
                     return True
                 else:
                     continue
@@ -388,4 +388,4 @@ Default_filter = True
 tot = 0
 
 if __name__ == "__main__":
-    solution = find_poster_solutions(userdata_path="../Yumesute.json")
+    solution = find_poster_solutions(userdata_path="../test.json")
