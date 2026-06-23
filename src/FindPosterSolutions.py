@@ -162,7 +162,7 @@ class PosterFilter:
             v = trigger["Value"]
             if t == "Attribute":  # decrease 6410
                 v = self.n2attr.get(v, None)
-                if v in character["Attribute"]:
+                if v not in character["Attribute"]:
                     return True
                 else:
                     continue
@@ -283,7 +283,7 @@ class PosterSolution:
         #     if not self.dominated[i]:
         #         self.supreme_arr.add(i)
 
-    # no responsibility for accessory
+    # superfluous try to combine a with p
     # def multi_accessory(self, character):
     #     if (character == 401) or (character == 102):
     #         poster_bot = []
@@ -313,9 +313,9 @@ class PosterSolution:
 
 def find_poster_solutions(
         userdata_path=None,
-        character_master_path="./Data/CharacterMaster.json",
-        poster_ability_path="./Data/PosterAbilityMaster.json",
-        effect_master_path="./Data/EffectMaster.json",
+        character_master_path="../data/CharacterMaster.json",
+        poster_ability_path="../data/PosterAbilityMaster.json",
+        effect_master_path="../data/EffectMaster.json",
         userdata=None
 ):
     if userdata is not None:
@@ -388,4 +388,4 @@ Default_filter = True
 tot = 0
 
 if __name__ == "__main__":
-    solution = find_poster_solutions(userdata_path="../Yumesute.json")
+    solution = find_poster_solutions(userdata_path="../test.json")

@@ -1,37 +1,40 @@
 #!/bin/bash
-
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 cd "$PROJECT_ROOT" || exit 1
 
+# 默认值
 DATA_DIR="data"
 USER_NAME="Yumetest.json"
-MANDATORY_CHARS=(150010 0 150020 0 150030 0 150040 0 0 0)
-MANDATORY_POSTERS=(330380 0 0 0 0 0 0 0 0 0)
-MANDATORY_LEADER=0
-UPDATE_REPO="https://github.com/esterTion/yumesute_master_db_diff"
+MC_ARGS=()
+MP_ARGS=()
+
+DATA_SET=false
+MC_SET=false
+MP_SET=false
+USER_SET=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        -d|--data)
+            DATA_DIR="$2"; DATA_SET=true; shift 2 ;;
+        -mc|--mandatory_characters)
+            MC_ARGS=("${@:2:10}"); MC_SET=true; shift 11 ;;
+        -mp|--mandatory_posters)
+            MP_ARGS=("${@:2:10}"); MP_SET=true; shift 11 ;;
+        -h|--help)
+            python -m src.ActorFormation --help; exit 0 ;;
+        *)
+            echo "未知选项: $1"; exit 1 ;;
+    esac
+done
 
 CMD=(python -m src.ActorFormation "$USER_NAME")
+$DATA_SET && CMD+=(-d "$DATA_DIR")
+$MC_SET && CMD+=(-mc "${MC_ARGS[@]}")
+$MP_SET && CMD+=(-mp "${MP_ARGS[@]}")
 
-CMD+=(-d "$DATA_DIR")
-
-if [ "${MANDATORY_CHARS[*]}" != "0 0 0 0 0 0 0 0 0 0" ]; then
-    CMD+=(-mc "${MANDATORY_CHARS[@]}")
-fi
-
-if [ "${MANDATORY_POSTERS[*]}" != "0 0 0 0 0 0 0 0 0 0" ]; then
-    CMD+=(-mp "${MANDATORY_POSTERS[@]}")
-fi
-
-if [ $MANDATORY_LEADER -ne 0 ]; then
-    CMD+=(-ml "$MANDATORY_LEADER")
-fi
-
-if [ -n "$UPDATE_REPO" ]; then
-    CMD+=(-u "$UPDATE_REPO")
-fi
-
-echo "Execute command: ${CMD[*]}"
+echo "正在运行: ${CMD[*]}"
 "${CMD[@]}"
 
 read -r -p "按回车键退出..."

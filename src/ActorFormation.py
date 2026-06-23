@@ -4,9 +4,14 @@ Input: relative files' path.
 Output: N-Top results among all status.
 """
 import json
+import os
+import asyncio
+
 import time
 
 from .FindPosterSolutions import find_poster_solutions, CharacterFilter
+from .args import parse_args
+
 from collections import defaultdict
 
 
@@ -35,8 +40,6 @@ class CheckUnrepeated:
         self.manda_poste = [0] * 5  # record mandatory posters and [index] position
         self.prior_chara = set()  # record mandatory characters with void position
         self.prior_poste = set()  # record mandatory posters with void position
-        # self.busy_charb = set()  # record busy characters' [BaseId] after processing priorities
-        # self.busy_poste = set()  # record busy posters' [BaseId] after processing priorities
         self.num_master = {1, 2, 3, 4, 5}
         self.state_base = [0, 0, 0, 0, 0]  # be used for initialize bfs status
         self.chara_mid2id = defaultdict(list)
@@ -114,7 +117,7 @@ class CheckUnrepeated:
             # bool_either = False
             if not pos_c < 0:  # mandatory character with position
                 self.manda_chara[pos_c] = bid
-                print(f"character{bid} at {pos_c}")
+                # print(f"character{bid} at {pos_c}")
                 # bool_either = True
             elif bid:  # mandatory character without position
                 self.prior_chara.add(bid)
@@ -123,21 +126,6 @@ class CheckUnrepeated:
             pos_p = poste[i2 + 1]
             if bid and not pos_p:
                 self.prior_poste.add(bid)
-            # if bool_either:
-            #     cbid = c_cache[bid].get("CharacterBaseMasterId", [])
-            #     for j in cbid:
-            #         self.busy_charb.add(j)
-            # bid = poste[i2]
-            # if bid:
-            #     self.busy_poste.add(bid)
-            # if not pos < 0:  # mandatory poster with position
-            #     self.manda_poste[pos] = bid
-            #     bool_either = True
-            # elif bid:  # mandatory poster without position
-            #     self.prior_poste.add(bid)
-            #     bool_either = True
-            # if bool_either:
-            #     self.busy_poste.add(bid)
 
     def urp_filter_n(self, num_busy=None):  # check {1, 2, 3, 4, 5} which is used and discard
         number_bot = self.num_master.copy()
@@ -224,14 +212,15 @@ class CheckUnrepeated:
         return queue
 
     def processor_poster(self, clist, solutions):
+        # print(clist)
         stime = time.time()
         queue = []
         # print(self.manda_poste)
         self._result_poste = []
         self._status = set()
         manda_busy = {i+1 for i in range(5) if self.manda_poste[i]}  # initialize busy position
-        leng = len(self.prior_poste)
-        if leng:  # check prior characters' status initially
+        length = len(self.prior_poste)
+        if length:  # check prior characters' status initially
             for n in self.urp_filter_n(manda_busy):  # also feel free to loop, user will check it
                 for p in self.prior_poste:
                     state_bot = list(self.manda_poste)
@@ -239,7 +228,7 @@ class CheckUnrepeated:
                     state_bot = tuple(state_bot)
                     self._status.add(state_bot)
                     queue.append(state_bot)
-            for i in range(leng - 1):
+            for i in range(length - 1):
                 queue_next = []
                 for state in queue:
                     nums_bot = {i+1 for i, p in enumerate(state) if p}
@@ -254,9 +243,11 @@ class CheckUnrepeated:
                             self._status.add(state_bot)
                             queue_next.append(state_bot)
                 queue = queue_next
-        leng = 5 - leng - len(manda_busy)
-        if leng == 5:  # Why I code this module again?
+        length = 5 - length - len(manda_busy)
+        if length == 5:  # Why I code this module again?
             for n in self.urp_filter_n():
+                # if clist == (150030, 142420, 150020, 150040, 150010):
+                #     print(f"check for first time, now n: {n}, chara: {clist[n-1]}")
                 # print(f"clist: {clist}")
                 for p in solutions[clist[n-1]].supreme_arr:  # feel free, feel free
                     state_bot = list(self.state_base)
@@ -264,12 +255,12 @@ class CheckUnrepeated:
                     state_bot = tuple(state_bot)
                     self._status.add(state_bot)
                     queue.append(state_bot)
-            leng -= 1
+            length -= 1
         if not queue:
             state_bot = tuple(self.manda_poste)
             self._status.add(state_bot)
             queue.append(state_bot)
-        for i in range(leng):
+        for i in range(length):
             queue_next = []
             for state in queue:
                 nums_bot = {i+1 for i, p in enumerate(state) if p}
@@ -290,26 +281,22 @@ class CheckUnrepeated:
             res_bot[:5] = clist  # TODO(Frocean): Send c/p status respectively may accelerate a lot.
             res_bot[5:10] = list(q)
             self._result_poste.append(tuple(res_bot))
-        # for q in queue:
-        #     res_bot = [None] * 10
-        #     res_bot[0:9:2] = clist
-        #     res_bot[1:10:2] = list(q)
-        #     self._result_poste.append(tuple(res_bot))
         print(f"cost time {time.time() - stime}s in {len(queue)} solutions")
         return self._result_poste
 
 
 def automatic_formation(
-        userdata_path=None,
-        character_master_path="./data/CharacterMaster.json",
-        poster_ability_path="./data/PosterAbilityMaster.json",
-        effect_master_path="./data/EffectMaster.json",
+        userdata_path="../Yumetest.json",
+        character_master_path="../data/CharacterMaster.json",
+        poster_ability_path="../data/PosterAbilityMaster.json",
+        effect_master_path="../data/EffectMaster.json",
         mandatory_characters=(150010, 0, 150020, 0, 150030, 0, 150040, 0, 0, 0),
         mandatory_posters=(330380, 150030, 230120, 150040, 0, 0, 0, 0, 0, 0),
         pipeline_queue=None,
+        loop=None,
         userdata=None
 ):
-    start_time = time.time()
+    # start_time = time.time()
 
     if userdata is not None:
         user_data = userdata
@@ -323,7 +310,7 @@ def automatic_formation(
         characters_data = json.load(f)
     characters_id_master = {item["Id"]: item for item in characters_data}
 
-    current_time = time.time() - start_time
+    # current_time = time.time() - start_time
     # print(f"check data in {current_time}s")
 
     c_cache = {}
@@ -345,8 +332,7 @@ def automatic_formation(
                                              userdata)
     print(f"check characters...")
     result_c = checker.processor_character(c_cache)
-    # print(f"[DEBUG] processor_character done, {len(result_c)} character combinations")
-    put_count = 0
+    # put_count = 0
     for r in result_c:
         print(f"check posters...")
         # print(r)
@@ -354,45 +340,31 @@ def automatic_formation(
         charb_id = [None] * 5
         for n, c in enumerate(r):
             charb_id[n-1] = c_cache[c].get("CharacterBaseMasterId", [])
-        result = checker.processor_poster(list(r), poster_solutions)
+        # print(charb_id)
+        result = checker.processor_poster(r, poster_solutions)
         if pipeline_queue is not None:
-            pipeline_queue.put({"Result": result, "CharacterBaseMasterId": charb_id})
+            asyncio.run_coroutine_threadsafe(
+                pipeline_queue.put({"Result": result, "CharacterBaseMasterId": charb_id}),
+                loop
+            )
         #     put_count += 1
         #     if put_count % 100 == 0:
-        #         print(f"[DEBUG] put {put_count} items into queue, queue size ~{pipeline_queue.qsize()}")
-    # print(f"[DEBUG] finished putting {put_count} items, sending EOT")
+        #         print(f"put {put_count} items into queue, queue size {pipeline_queue.qsize()}")
     if pipeline_queue is not None:
-        pipeline_queue.put(None)
-
-
-# def parse_args():
-#     parser = argparse.ArgumentParser(description='Yumesute auto team-up')
-#     parser.add_argument('user', nargs='?', metavar='File name for user data', default='Yumetest.json', help='账号数据名称')
-#     parser.add_argument('-d', '--data', metavar='DIR for server data', default='data', help='服务器内资源路径')
-#     parser.add_argument('-mc', '--mandatory_characters', type=int, nargs=10, default=[0]*10,
-#                         help='交替输入必选角色及其固定位置, 不选则填0, 以空格分割')
-#     parser.add_argument('-mp', '--mandatory_posters', type=int, nargs=10, default=[0]*10,
-#                         help='交替输入必选海报及其对应位置, 不选则填0, 以空格分割')
-#     parser.add_argument('-ml', '--mandatory_leader', type=int, default=0, help='固定队长位置, 不选则填0')
-#     parser.add_argument('-u', '--update', type=str, default='https://github.com/esterTion/yumesute_master_db_diff')
-#     return parser.parse_args()
+        asyncio.run_coroutine_threadsafe(pipeline_queue.put(None), loop)
 
 
 if __name__ == "__main__":
-    automatic_formation(userdata_path="./Yumetest.json")
-    # import argparse
-    # import os
-    # args = parse_args()
-    # userdata_path = os.path.join(args.user)
-    # character_master_path = os.path.join(args.data, 'CharacterMaster.json')
-    # poster_ability_path = os.path.join(args.data, 'PosterAbilityMaster.json')
-    # accessory_path = os.path.join(args.data, 'accessory_processed.json')
-    # effect_master_path = os.path.join(args.data, 'EffectMaster.json')
-    # automatic_formation(
-    #     userdata_path,
-    #     character_master_path,
-    #     poster_ability_path,
-    #     effect_master_path,
-    #     tuple(args.mandatory_characters),
-    #     tuple(args.mandatory_posters)
-    # )
+    args = parse_args()
+    userdata_path = args.user
+    character_master_path = os.path.join(args.data, 'CharacterMaster.json')
+    poster_ability_path = os.path.join(args.data, 'PosterAbilityMaster.json')
+    accessory_path = os.path.join(args.data, 'accessory_processed.json')
+    effect_master_path = os.path.join(args.data, 'EffectMaster.json')
+
+    automatic_formation(userdata_path,
+                        character_master_path,
+                        poster_ability_path,
+                        effect_master_path,
+                        tuple(args.mandatory_characters),
+                        tuple(args.mandatory_posters))
