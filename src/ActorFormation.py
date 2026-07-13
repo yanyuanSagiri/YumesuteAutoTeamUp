@@ -9,7 +9,7 @@ import asyncio
 
 import time
 
-from .FindPosterSolutions import find_poster_solutions, CharacterFilter
+from .FindPosterSolutions import find_poster_solutions, CharacterFilter, load_data_source
 from .args import parse_args
 
 from collections import defaultdict
@@ -306,8 +306,7 @@ def automatic_formation(
     character_list = user_data["characters"]
     # poster_list = user_data["posters"]
 
-    with open(character_master_path, "r", encoding="utf-8") as f:
-        characters_data = json.load(f)
+    characters_data = load_data_source(user_data, "characters_data", character_master_path)
     characters_id_master = {item["Id"]: item for item in characters_data}
 
     current_time = time.time() - start_time

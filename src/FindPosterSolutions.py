@@ -12,6 +12,13 @@ from collections import defaultdict
 import copy
 
 
+def load_data_source(user_data, key, path):
+    if user_data is not None and key in user_data:
+        return user_data[key]
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
 class CharacterFilter:
     """
     Filter unnecessary elements for character. Options included:
@@ -359,22 +366,19 @@ def find_poster_solutions(
     character_list = user_data["characters"]
     poster_list = user_data["posters"]
 
-    with open(character_master_path, "r", encoding="utf-8") as f:
-        characters_data = json.load(f)
+    characters_data = load_data_source(user_data, "characters_data", character_master_path)
     characters_id_master = {item["Id"]: item for item in characters_data}
 
     # with open("./PosterMaster.json", "r", encoding="utf-8") as f:
     #     posters_data = json.load(f)
     # posters_id_master = {item["Id"]: item for item in posters_data}
 
-    with open(poster_ability_path, "r", encoding="utf-8") as f:
-        posters_ability = json.load(f)
+    posters_ability = load_data_source(user_data, "posters_ability_data", poster_ability_path)
     posters_ability_master = defaultdict(list)
     for item in posters_ability:
         posters_ability_master[item["PosterMasterId"]].append(item)
 
-    with open(effect_master_path, "r", encoding="utf-8") as f:
-        effects_data = json.load(f)
+    effects_data = load_data_source(user_data, "effects_data", effect_master_path)
     effect_id_master = {item["Id"]: item for item in effects_data}
 
     solutions = {}
