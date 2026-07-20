@@ -14,13 +14,46 @@
 
 ### 方式二：从源码构建
 
-```bash
-# 安装 Python 3.10+ 与打包工具
-pip install pyinstaller
+先安装 Python 3.10+ 与 PyInstaller：
 
-# 构建 exe
+```powershell
+pip install pyinstaller
+```
+
+在项目根目录执行：
+
+```powershell
 .\build-python.ps1
 ```
+
+该脚本等价于清理旧产物后执行：
+
+```powershell
+pyinstaller --onefile Start.py
+```
+
+构建成功后会生成：
+
+```text
+dist\Start.exe
+```
+
+`build-python.ps1` 会删除并重新生成 `dist/`、`build/` 和 `Start.spec`。如果这些目录里有你手动放置的文件，请先移走。
+
+### 可选：构建 Electron 安装包
+
+如果需要把 Electron 前端和 `Start.exe` 一起打包，可以在项目根目录执行：
+
+```powershell
+.\build-all.ps1
+```
+
+该脚本会：
+
+1. 生成或复用 `dist\Start.exe`。
+2. 复制 `Start.exe` 和 `data/` 到 `electron-app\resources\`。
+3. 在 `electron-app/` 下执行 `npm install`。
+4. 执行 `npm run build:win`，最终安装包输出到 `electron-app\dist\`。
 
 仅实验性的 `StartForServer.py` / `src/pipeline.py` 需要额外安装 `aiohttp`。
 
@@ -427,6 +460,14 @@ results = run_formation(user_data)
 | `{"Control": "continue"}` | 恢复 stdout 输出阵容结果。 |
 | `{"FIN": true}` | 结束 stdin 监听，但不会取消正在进行的阵容计算。若为了暂停/继续而保留 stdin，收到 stdout 的 `{"FIN": true}` 后应发送该消息或关闭 stdin，让进程正常退出。 |
 
+控制消息只影响 `Start.py` 内部的 stdin 监听和 stdout 写出：
+
+- `stop` 会让 `stdout_writer()` 停在等待状态，暂时不再向 stdout 打印新的阵容数组。
+- `stop` 不会立刻停止 `automatic_formation()` 的角色/海报枚举，也不会取消饰品扩展；当输出队列写满后，后续任务才会因为队列背压而放慢。
+- `continue` 会重新放开 `stdout_writer()`，之前积压在输出队列里的结果会继续按行输出。
+- 控制消息必须在用户数据之后发送；第一行 stdin 永远会被当作完整用户数据解析。
+- 每条控制消息都必须独占一行。非法 JSON 会被忽略，未知 `Control` 值也不会报错。
+
 Node.js 控制示例：
 
 ```javascript
@@ -548,12 +589,28 @@ python Start.py -mc 150030 0 0 0 0 0 0 0 0 0 -mp 330380 150030 0 0 0 0 0 0 0 0
 
 ### stdout（按行输出）
 
+`Start.py` 的 stdout 是按行输出的混合流。调用方应把每一行先尝试 `JSON.parse` / `json.loads`，再按 JSON 类型分发；不能把 stdout 当作单一 JSON 文档。
+
+当前可能出现以下几类行：
+
+| 行类型 | 示例 | 含义 |
+|--------|------|------|
+| 阵容数组 | `[c1, c2, ..., a5]` | 一个完整候选阵容 |
+| 进度对象 | `{"type":"character_total","num":123}` | 角色状态总数 |
+| 进度对象 | `{"type":"character_now","num":7}` | 当前已处理到第几个角色状态 |
+| 结束对象 | `{"FIN":true}` | 阵容输出结束 |
+| 错误对象 | `{"error":"..."}` | 输入或启动阶段错误 |
+| 普通文本 | `check data in ...` | 诊断日志，当前版本也写在 stdout |
+
+#### 阵容结果
+
 阵容结果是包含 15 个元素的 JSON 数组，每行一个：
+
 ```json
 [c1, c2, c3, c4, c5, p1, p2, p3, p4, p5, a1, a2, a3, a4, a5]
 ```
 
-当前版本还会把 `check data...`、`cost time...`、`Finished` 等普通诊断文本写入 stdout。因此调用方应按行维护缓冲区，仅处理能成功解析的 JSON；不要假设一次 `data` 事件恰好对应一整行。
+当前版本还会把 `check data...`、`check characters...`、`check posters...`、`cost time...`、`Finished` 等普通诊断文本写入 stdout。因此调用方应按行维护缓冲区，仅处理能成功解析的 JSON；不要假设一次 `data` 事件恰好对应一整行。
 
 **字段说明：**
 | 索引 | 说明 | 示例 |
@@ -577,7 +634,26 @@ if (Array.isArray(result) && result.length === 15) {
 }
 ```
 
+### 进度消息
+
+角色/海报基础状态生成阶段会额外输出进度对象，供前端进度条使用：
+
+```json
+{"type": "character_total", "num": 123}
+{"type": "character_now", "num": 7}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `type` | string | 进度消息类型 |
+| `num` | integer | 对应计数 |
+
+`character_total` 在角色状态枚举完成后输出一次，表示当前 box 和 `-mc` 约束下共有多少个角色排列状态。`character_now` 在每个角色排列完成海报状态处理后输出一次，表示已经处理完第几个角色排列；通常可用 `character_now / character_total` 作为角色/海报基础状态阶段的进度。
+
+注意：`character_total` 和 `character_now` 只覆盖角色与海报基础状态生成阶段，不包含后续饰品扩展和 stdout 写出队列的全部耗时。`ActorFormation.py` 中还预留了 `poster_total` 的注释输出，但当前默认不会输出；饰品阶段也没有逐项进度消息。
+
 ### 结束标志
+
 ```json
 {"FIN": true}
 ```
